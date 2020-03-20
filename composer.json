@@ -1,6 +1,6 @@
 {
     "name": "renan/cakephp-predis",
-    "description": "CakePHP 3.x Predis Cache Engine",
+    "description": "CakePHP 4.x Predis Cache Engine",
     "keywords": ["cake", "cakephp", "cache", "redis", "predis"],
     "homepage": "https://github.com/renan/cakephp-predis",
     "license": "MIT",
@@ -21,8 +21,8 @@
         }
     },
     "require": {
-        "php": ">=5.4",
-        "cakephp/cache": "^3.0",
+        "php": ">=7.0",
+        "cakephp/cache": "^4.0",
         "predis/predis": "^1.0"
     },
     "require-dev": {
