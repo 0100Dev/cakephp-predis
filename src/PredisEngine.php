@@ -2,6 +2,7 @@
 namespace Renan\Cake\Predis;
 
 use Cake\Cache\CacheEngine;
+use Cake\Http\Exception\NotImplementedException;
 use Predis\Client;
 use Predis\ClientInterface;
 
@@ -28,7 +29,6 @@ final class PredisEngine extends CacheEngine
      * @var array
      */
     protected $_defaultConfig = [
-        'duration' => 3600,
         'groups' => [],
         'prefix' => 'cake_',
         'probability' => 100,
@@ -38,15 +38,9 @@ final class PredisEngine extends CacheEngine
     ];
 
     /**
-     * Initialize the cache engine
-     *
-     * Called automatically by the cache frontend. Merge the runtime config with the defaults
-     * before use.
-     *
-     * @param array $config Associative array of parameters for the engine
-     * @return bool True if the engine has been successfully initialized, false if not
+     * {@inheritDoc}
      */
-    public function init(array $config = [])
+    public function init(array $config = []): bool
     {
         parent::init($config);
 
@@ -61,39 +55,32 @@ final class PredisEngine extends CacheEngine
     }
 
     /**
-     * Write value for a key into cache
-     *
-     * @param string $key Identifier for the data
-     * @param mixed $value Data to be cached
-     * @return bool True if the data was successfully cached, false on failure
+     * {@inheritDoc}
      */
-    public function write($key, $value)
+    public function set($key, $value, $ttl = null): bool
     {
         $key = $this->_key($key);
         $value = is_int($value)
             ? (int) $value
             : serialize($value);
 
-        if ($this->_config['duration'] === 0) {
+        if ($ttl === 0) {
             return (string) $this->client->set($key, $value) === 'OK';
         }
 
-        return (string) $this->client->setex($key, $this->_config['duration'], $value) === 'OK';
+        return (string) $this->client->setex($key, $ttl, $value) === 'OK';
     }
 
     /**
-     * Read a key from the cache
-     *
-     * @param string $key Identifier for the data
-     * @return mixed The cached data, or false if the data doesn't exist, has expired, or if there was an error fetching it
+     * {@inheritDoc}
      */
-    public function read($key)
+    public function get($key, $default = null)
     {
         $key = $this->_key($key);
         $value = $this->client->get($key);
 
         if ($value === null) {
-            return false;
+            return $default;
         }
 
         return ctype_digit($value)
@@ -102,11 +89,7 @@ final class PredisEngine extends CacheEngine
     }
 
     /**
-     * Increment a number under the key and return incremented value
-     *
-     * @param string $key Identifier for the data
-     * @param int $offset How much to add
-     * @return bool|int New incremented value, false otherwise
+     * {@inheritDoc}
      */
     public function increment($key, $offset = 1)
     {
@@ -119,11 +102,7 @@ final class PredisEngine extends CacheEngine
     }
 
     /**
-     * Decrement a number under the key and return decremented value
-     *
-     * @param string $key Identifier for the data
-     * @param int $offset How much to subtract
-     * @return bool|int New incremented value, false otherwise
+     * {@inheritDoc}
      */
     public function decrement($key, $offset = 1)
     {
@@ -136,12 +115,9 @@ final class PredisEngine extends CacheEngine
     }
 
     /**
-     * Delete a key from the cache
-     *
-     * @param string $key Identifier for the data
-     * @return bool True if the value was successfully deleted, false if it didn't exist or couldn't be removed
+     * {@inheritDoc}
      */
-    public function delete($key)
+    public function delete($key): bool
     {
         $key = $this->_key($key);
         if (! $this->client->exists($key)) {
@@ -152,22 +128,23 @@ final class PredisEngine extends CacheEngine
     }
 
     /**
-     * Delete all keys from the cache
-     *
-     * @param bool $check if true will check expiration, otherwise delete all
-     * @return bool True if the cache was successfully cleared, false otherwise
+     * {@inheritDoc}
      */
-    public function clear($check)
+    public function clear(): bool
     {
-        if ($check) {
-            return true;
-        }
-
         $keys = $this->client->keys($this->_config['prefix'] . '*');
         foreach ($keys as $key) {
             $this->client->del($key);
         }
 
         return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function clearGroup(string $group): bool
+    {
+        throw new NotImplementedException();
     }
 }
