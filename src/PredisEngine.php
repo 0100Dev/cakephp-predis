@@ -29,6 +29,7 @@ final class PredisEngine extends CacheEngine
      * @var array
      */
     protected $_defaultConfig = [
+        'duration' => 3600,
         'groups' => [],
         'prefix' => 'cake_',
         'probability' => 100,
@@ -59,6 +60,8 @@ final class PredisEngine extends CacheEngine
      */
     public function set($key, $value, $ttl = null): bool
     {
+        $ttl = $ttl ?? $this->_config['duration'];
+
         $key = $this->_key($key);
         $value = is_int($value)
             ? (int) $value
